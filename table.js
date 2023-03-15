@@ -210,7 +210,9 @@ function createHaveLayout(recreate = false) {
         craftingArray = [];
         for (let i = 0; i < oldCraftingArray.length; i++) {
             if (oldCraftingArray.length != i + 1) {
-                haveContainer.appendChild(textElement(" , ",["box-text","comma"]));
+                if (i != 0) {
+                    haveContainer.appendChild(textElement(" , ",["box-text","comma"]));
+                }
             } else {
                 haveContainer.appendChild(textElement(" and ",["box-text","and"]));
             }
@@ -283,11 +285,11 @@ function craftAll(craftingArray) {
         let item1 = element.currentItem;
         for (let j = i+1; j < (craftingArray.length); j++) {
             const e = craftingArray[j];
-            console.log("elements",element,e,"\n","j and i", i, j);
+            // console.log("elements",element,e,"\n","j and i", i, j);
             if (e.currentItem != element.currentItem) {
                 let item2 = e.currentItem;
                 craftCombinations.push({items:[i,j] ,recepie:[item1,item2]});
-                console.log([i,j]);
+                // console.log([i,j]);
             }
         }
         // console.log(craftCombinations);
@@ -362,7 +364,7 @@ craftItemButton.addEventListener('click', (e) => {
 });
 
 function craftResultingItem(array,result) {
-    console.log(array);
+    // console.log(array);
     if (array[0] < array[1]) {
         item1 = array[0];
         item2 = array[1];
@@ -388,3 +390,10 @@ function craftResultingItem(array,result) {
 
     craftAll(craftingArray);
 }
+
+const faqText = document.getElementById("faq-text");
+const faqButton = document.getElementById("faq-button");
+
+faqButton.addEventListener('click', () => {
+    faqText.classList.toggle("hidden");
+});
