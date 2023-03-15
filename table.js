@@ -179,6 +179,7 @@ function create(params) {
 function selectBox(boxArray,id) {
     if (selectedObject.array !== null && selectedObject.id !== null) {
         // console.log(boxArray,id,"\n",selectedObject.array,selectedObject.id);
+
         if (selectedObject.array !== boxArray || selectedObject.id !== id) {
             document.getElementById(selectedObject.array[selectedObject.id].id).classList.remove("selected");
             selectedObject.array = boxArray;
@@ -191,21 +192,38 @@ function selectBox(boxArray,id) {
         document.getElementById(boxArray[id].id).classList.add("selected");
     }
 }
+const textContainer = document.getElementById("text-selector");
 
-function createHaveLayout() {
+function createHaveLayout(recreate = false) {
+    textContainer.innerHTML = "";
     haveContainer = document.createElement('div');
     haveContainer.id = "have-container";   
     haveContainer.classList.add("text-option");
     haveContainer.appendChild(textElement("I have","box-text"));
-    createItemBox(haveContainer,craftingArray,"have-box-");
-    haveContainer.appendChild(textElement("and",["box-text","and"]));
-    createItemBox(haveContainer,craftingArray,"have-box-");
+    if (!recreate) {
+        createItemBox(haveContainer,craftingArray,"have-box-");
+        haveContainer.appendChild(textElement(" and ",["box-text","and"]));
+        createItemBox(haveContainer,craftingArray,"have-box-");
+    } else {
+        selectedObject = {array:null,id:null};
+        let oldCraftingArray = craftingArray;
+        craftingArray = [];
+        for (let i = 0; i < oldCraftingArray.length; i++) {
+            if (oldCraftingArray.length != i + 1) {
+                haveContainer.appendChild(textElement(" , ",["box-text","comma"]));
+            } else {
+                haveContainer.appendChild(textElement(" and ",["box-text","and"]));
+            }
+            createItemBox(haveContainer,craftingArray,"have-box-",oldCraftingArray[i].currentItem);
+            // console.log(oldCraftingArray.length,i);
+        }
+    }
     // createItemBox(haveContainer,craftingArray,"have-box-");
     // createItemBox(haveContainer,craftingArray,"have-box-");
     // createItemBox(haveContainer,craftingArray,"have-box-");
     // console.log(craftingArray);
 
-    document.getElementById("text-selector").appendChild(haveContainer);
+    textContainer.appendChild(haveContainer);
     selectBox(craftingArray,0);
     // I have <span id="have1" class="span-selection have selected item-box"></span> and <span id="have2" class="span-selection have item-box"></span></div>
 }
@@ -240,6 +258,7 @@ function textElement(string,class_,id) {
 }
 
 function setSelectedBoxItem(id) {
+    console.log(selectedObject.id)
     let currentBox = selectedObject.array[selectedObject.id];
     let box = document.getElementById(currentBox.id);
     let img = box.children[0];
@@ -266,7 +285,7 @@ function craftAll(craftingArray) {
             const e = craftingArray[j+i];
             if (e.currentItem != element.currentItem) {
                 let item2 = e.currentItem;
-                craftCombinations.push([item1,item2]);
+                craftCombinations.push({items:[i,j] ,recepie:[item1,item2]});
             }
         }
     }
@@ -274,23 +293,24 @@ function craftAll(craftingArray) {
     // return craftCombinations;
     let craftedItems = [];
     for (let i = 0; i < craftCombinations.length; i++) {
-        let combinedValue = (craftCombinations[i][0]+1)*(craftCombinations[i][1]+1);
+        let combinedValue = (craftCombinations[i].recepie[0]+1)*(craftCombinations[i].recepie[1]+1);
         if (!contains(craftedItems,combinedValue)) {
             craftedItems.push(combinedValue);
             
-            let craftedItem = craftItem(craftCombinations[i][0],craftCombinations[i][1]);
+            let craftedItem = craftItem(craftCombinations[i].recepie[0],craftCombinations[i].recepie[1]);
             //console.log(craftedItem);
             if (craftedItem !== -1) {
                 let recepie = document.createElement("div");
                 let items = document.createElement("div");
                 items.classList.add("top-items");
                 recepie.classList.add("recepie");
-                items.appendChild(createDecorativeItemBox(craftCombinations[i][0]));
+                items.appendChild(createDecorativeItemBox(craftCombinations[i].recepie[0]));
                 items.appendChild(textElement(" + "));
-                items.appendChild(createDecorativeItemBox(craftCombinations[i][1]));
+                items.appendChild(createDecorativeItemBox(craftCombinations[i].recepie[1]));
                 recepie.appendChild(items);
                 recepie.appendChild(textElement(" = "));
-                recepie.appendChild(createDecorativeItemBox(craftedItem, "result"));
+                // console.log(craftCombinations[i].items);
+                recepie.appendChild(createDecorativeItemBox(craftedItem, "result", craftCombinations[i].items));
                 output.appendChild(recepie);
             }
             
@@ -307,7 +327,7 @@ function contains(array, obj) {
     return false;
 }
 
-function createDecorativeItemBox(defaultItem = -1,class_ = undefined) {
+function createDecorativeItemBox(defaultItem = -1,class_ = undefined, onclickItems = undefined) {
     let box = document.createElement("img");
     box.classList.add("item-image","item-box-decorative");
     if (class_ != undefined) {
@@ -318,11 +338,16 @@ function createDecorativeItemBox(defaultItem = -1,class_ = undefined) {
             box.title = items[defaultItem].name;
             box.src = `./portraits/${items[defaultItem].name_id}_icon.png`;
         } else {
+            onclickItems = undefined;
             box.title = `${defaultItem.f} Food Pips`
             box.src = `./portraits/Food_pip_icon.png`;
         }
     } else {
         box.src = `./portraits/Remove_icon.png`;
+    }
+    if (onclickItems != undefined) {
+        box.addEventListener('click', () => {craftResultingItem(onclickItems,defaultItem)});
+        box.classList.add("item-box");
     }
     return box;
 }
@@ -332,3 +357,25 @@ craftItemButton.addEventListener('click', (e) => {
        craftAll(craftingArray);
     }
 });
+
+function craftResultingItem(array,result) {
+    item1 = array[0];
+    item2 = array[1];
+    // console.log[result];
+    document.getElementById(craftingArray[item1].id).children[0].src = `./portraits/${items[result].name_id}_icon.png`;
+    craftingArray[item1].currentItem = result;
+    if (craftingArray.length <= 2) {
+        craftingArray[item2].currentItem = -1;
+        document.getElementById(craftingArray[item2].id).children[0].src = `./portraits/Remove_icon.png`;
+    } else {
+        let boxes = document.getElementById("have-container").getElementsByClassName("item-box");
+        boxes[item2].remove();
+        craftingArray.splice(item2, 1);
+        createHaveLayout(true);
+        selectBox(craftingArray,item1);
+    }
+    // console.log(item1,item2);
+    
+
+    craftAll(craftingArray);
+}
