@@ -281,13 +281,16 @@ function craftAll(craftingArray) {
     for (let i = 0; i < craftingArray.length; i++) {
         const element = craftingArray[i];
         let item1 = element.currentItem;
-        for (let j = 0; j < craftingArray.length - i; j++) {
-            const e = craftingArray[j+i];
+        for (let j = i+1; j < (craftingArray.length); j++) {
+            const e = craftingArray[j];
+            console.log("elements",element,e,"\n","j and i", i, j);
             if (e.currentItem != element.currentItem) {
                 let item2 = e.currentItem;
                 craftCombinations.push({items:[i,j] ,recepie:[item1,item2]});
+                console.log([i,j]);
             }
         }
+        // console.log(craftCombinations);
     }
     
     // return craftCombinations;
@@ -359,8 +362,14 @@ craftItemButton.addEventListener('click', (e) => {
 });
 
 function craftResultingItem(array,result) {
-    item1 = array[0];
-    item2 = array[1];
+    console.log(array);
+    if (array[0] < array[1]) {
+        item1 = array[0];
+        item2 = array[1];
+    } else {
+        item1 = array[1];
+        item2 = array[0];
+    }
     // console.log[result];
     document.getElementById(craftingArray[item1].id).children[0].src = `./portraits/${items[result].name_id}_icon.png`;
     craftingArray[item1].currentItem = result;
